@@ -3,6 +3,12 @@
 #include <queue>
 #include <climits>
 #include <algorithm>
+#include <chrono>
+#include <cstdlib>
+#include <ctime>
+#include <numeric> 
+#include <iomanip>
+#include <string>
 
 
 using namespace std;
@@ -14,7 +20,7 @@ void primMST(vector<vector<int>> graph) {
     // вектор для хранения родителя вершины
     vector<int> parent(v);
 
-    // вектор хранит вес/стоимость MST
+    // вектор хранит вес/стоимость 
     vector<int> key(v);
 
     // вектор для представления набора
@@ -32,12 +38,12 @@ void primMST(vector<vector<int>> graph) {
         vis[i] = false;
     }
 
-    // Всегда включаем первую вершину в MST.
+    // Всегда включаем первую вершину в минимальное оставное дерево
     // Устанавливаем ключ равным 0, чтобы эта вершина
     // была выбрана в качестве первой.
     key[0] = 0;
 
-    // Первая вершина всегда является корнем MST
+    // Первая вершина всегда является корнем минимального оставного дерева
     parent[0] = -1;
 
     // Добавляем исходную вершину в минимальную кучу
@@ -61,13 +67,13 @@ void primMST(vector<vector<int>> graph) {
         }
     }
 
-    // Выводим рёбра и их веса в MST
-    cout << "Алгоритм Прима\n";
-    cout << "Ребро \tВес\n";
-    for (int i = 1; i < v; i++) {
-        cout << parent[i] << " - " << i
-            << " \t" << graph[i][parent[i]] << " \n";
-    }
+    // Выводим рёбра и их веса 
+    //cout << "Алгоритм Прима\n";
+    //cout << "Ребро \tВес\n";
+    //for (int i = 1; i < v; i++) {
+    //    cout << parent[i] << " - " << i
+    //        << " \t" << graph[i][parent[i]] << " \n";
+    //}
 }
 
 
@@ -146,8 +152,8 @@ void kruskalMST(const vector<vector<int>>& graph) {
     // Инициализируем Union-Find для n вершин
     UnionFind uf(n);
 
-    // Строим MST
-    vector<Edge> mst;  // рёбра MST
+    // Строим минимальное оставное дерево
+    vector<Edge> mst;  // рёбра 
     int totalWeight = 0;
 
     for (const Edge& e : edges) {
@@ -161,33 +167,100 @@ void kruskalMST(const vector<vector<int>>& graph) {
     }
     
     
-    // Выводим рёбра и их веса в MST
-    cout << "Алгоритм Краскала\n";
-    cout << "Ребро \tВес\n";
-    for (const Edge& e : mst) {
-        cout << e.u << " - " << e.v
-            << " \t" << e.weight << " \n";
-    }
-    
+    // Выводим рёбра и их веса 
+    //cout << "Алгоритм Краскала\n";
+    //cout << "Ребро \tВес\n";
+    //for (const Edge& e : mst) {
+    //    cout << e.u << " - " << e.v
+    //        << " \t" << e.weight << " \n";
+    //}
+    //
 }
 
 
+// Функция для генерации случайной симметричной матрицы
+vector<vector<int>> generateRandomSymmetricMatrix(int n) {
+    srand(static_cast<unsigned int>(time(0)));
+    vector<vector<int>> matrix(n, vector<int>(n, 0));
+    for (int i = 0; i < n; ++i) {
+        for (int j = i; j < n; ++j) {
+            int val = rand();
+            matrix[i][j] = val;
+            matrix[j][i] = val;
+        }
+    }
+    return matrix;
+}
 
 int main() {
-    setlocale(LC_ALL, "Russian");
-    // Определяем матрицу смежности
-    vector<vector<int>> graph = { {5, 2, 0, 6, 0},
-                                {2, 3, 3, 8, 5},
-                                {0, 3, 6, 0, 7},
-                                {6, 8, 0, 9, 9},
-                                {0, 5, 7, 9, 1} };
+    setlocale(0, "");
+    srand(static_cast<unsigned int>(time(0)));
 
-    // Находим и выводим минимальное остовное дерево
-    primMST(graph);
+    // Фиксированные ширины колонок (в символах)
+    const int COL1_WIDTH = 14;  // Размер матрицы
+    const int COL2_WIDTH = 16;  // Алгоритм Прима
+    const int COL3_WIDTH = 16;  // Алгоритм Краскала
 
-    cout << endl;
+    // Шапка таблицы
+    cout << std::setw(COL1_WIDTH) << std::left << "Размер матрицы";
+    cout << " | ";
+    cout << std::setw(COL2_WIDTH) << std::left << "Алгоритм Прима";
+    cout << " | ";
+    cout << std::setw(COL3_WIDTH) << std::left << "Алгоритм Краскала";
+    cout << "\n";
 
-    kruskalMST(graph);
+    // Разделительная линия
+    cout << std::string(COL1_WIDTH, '-');
+    cout << "-|-";
+    cout << std::string(COL2_WIDTH, '-');
+    cout << "-|-";
+    cout << std::string(COL3_WIDTH, '-');
+    cout << "\n";
+
+    int sizes[] = { 3, 5, 7, 10, 15, 20, 30, 50, 80, 100 };
+
+    for (int check = 0; check < 10; ++check) {
+        int n = sizes[check];
+        vector<chrono::microseconds> durations_prim;
+        vector<chrono::microseconds> durations_kruskal;
+
+        // 1000 замеров
+        for (int i = 0; i < 100000; ++i) {
+            auto matrix = generateRandomSymmetricMatrix(n);
+
+            // Прим
+            auto start = chrono::high_resolution_clock::now();
+            primMST(matrix);
+            auto end = chrono::high_resolution_clock::now();
+            durations_prim.push_back(
+                chrono::duration_cast<chrono::microseconds>(end - start)
+            );
+
+            // Краскал
+            start = chrono::high_resolution_clock::now();
+            kruskalMST(matrix);
+            end = chrono::high_resolution_clock::now();
+            durations_kruskal.push_back(
+                chrono::duration_cast<chrono::microseconds>(end - start)
+            );
+        }
+
+        // Средние значения
+        auto total_prim = accumulate(durations_prim.begin(), durations_prim.end(), chrono::microseconds(0));
+        auto avg_prim = total_prim / 100000;
+
+        auto total_kruskal = accumulate(durations_kruskal.begin(), durations_kruskal.end(), chrono::microseconds(0));
+        auto avg_kruskal = total_kruskal / 100000;
+
+        // Вывод строки таблицы
+        cout << std::setw(COL1_WIDTH) << std::left << (to_string(n) + "x" + to_string(n));
+        cout << " | ";
+        cout << std::setw(COL2_WIDTH - 4) << std::right << avg_prim.count() << " мкс";  // -4: учитываем " мкс"
+        cout << " | ";
+        cout << std::setw(COL3_WIDTH - 4) << std::right << avg_kruskal.count() << " мкс";
+        cout << "\n";
+    }
 
     return 0;
 }
+
